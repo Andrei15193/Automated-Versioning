@@ -1,0 +1,42 @@
+name: Create Project 1 Release
+
+on:
+- workflow_call
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  createRelease:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout Sources
+        with:
+          fetch-depth: 0
+
+      - name: Show Release Information
+        run: |
+          function Get-NextRelease([string]$prefix, [string]$baseVersion) {
+            $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
+            $latestIncrement = git tag `
+              | Where-Object { $_ -match $tagFilter } `
+              | ForEach-Object {
+                $_ -split "\." `
+                | Select-Object -Last 1 `
+                | ForEach-Object { $_ -as [int] }
+              } `
+              | Sort-Object -Descending `
+              | Select-Object -First 1
+
+            $nextVersion = if ($latestIncrement -eq $null) { "$baseVersion.0" } else { "$baseVersion.$($latestIncrement + 1)" }
+
+            return @{
+              Version = $nextVersion;
+              Tag = "$prefix-$nextVersion"
+            }
+          }
+
+          Get-NextRelease "project1" (Get-Content 'Project 1/version.txt')
