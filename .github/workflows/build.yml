@@ -9,33 +9,61 @@ defaults:
 
 jobs:
   build:
-    name: List Versions (this could be a build)
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: List Versions
+      - name: Build
+        run: |
+          Write-Output "Pretend that this is an actual build, you know, for fun :)"
+
+      - name: Determine Releases
         id: releases
         run: |
-          Get-Content 'Project 1/version.txt'
-          Get-Content 'Project 2/version.txt'
-          Get-Content 'Project 3/version.txt'
-          Write-Output "::set-output name=release_project_1::yes"
-          Write-Output "::set-output name=release_project_2::no"
+          Write-Output "If the build and testing and all the good stuff run without a problem, determine which releases need to be created"
 
-      - name: Release Project 1
+          function Get-LatestReleaseRef([string]$prefix, [string]$baseVersion) {
+            $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
+            $latestIncrement = git tag `
+              | Where-Object { $_ -match $tagFilter } `
+              | ForEach-Object {
+                $_ -split "\." `
+                | Select-Object -Last 1 `
+                | ForEach-Object { $_ -as [int] }
+              } `
+              | Sort-Object -Descending `
+              | Select-Object -First 1
+
+            $latestReleaseRef = if ($latestIncrement -eq $null) { git rev-list --max-parents=0 HEAD } else { "$prefix-$baseVersion.$latestIncrement" }
+            return $latestReleaseRef;
+          }
+
+          if (git diff (Get-LatestReleaseRef "project1", (Get-Content 'Project 1/version.txt') -- 'Project 1/')) {
+            Write-Output "::set-output name=release_project_1::yes"
+            Write-Output "::set-output name=release_project_2::yes"
+            Write-Output "::set-output name=release_project_3::yes"
+          }
+          elseif (git diff (Get-LatestReleaseRef "project2", (Get-Content 'Project 2/version.txt') -- 'Project 2/')) {
+            Write-Output "::set-output name=release_project_2::yes"
+          }
+          elseif (git diff (Get-LatestReleaseRef "project3", (Get-Content 'Project 3/version.txt') -- 'Project 3/')) {
+            Write-Output "::set-output name=release_project_3::yes"
+          }
+
+      - name: Create Project 1 Release
         if: steps.releases.outputs.release_project_1 == 'yes'
         run: |
           Write-Output "I should probably create a release for Project 1"
 
-      - name: Release Project 2
+      - name: Create Project 2 Release
         if: steps.releases.outputs.release_project_2 == 'yes'
         run: |
           Write-Output "I should probably create a release for Project 2"
 
-      - name: Release Project 3
+      - name: Create Project 3 Release
         if: steps.releases.outputs.release_project_3 == 'yes'
         run: |
           Write-Output "I should probably create a release for Project 3"
