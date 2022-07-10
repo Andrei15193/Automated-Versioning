@@ -54,7 +54,7 @@ jobs:
               | Select-Object -First 1
 
             $nextVersion = if ($latestIncrement -eq $null) { "$baseVersion.0" } else { "$baseVersion.$($latestIncrement + 1)" }
-            $latestReleaseRef = if ($latestIncrement -eq $null) { (git rev-list --max-parents=0 HEAD) } else { "$prefix-$baseVersion.$latestIncrement" }
+            $latestReleaseRef = if ($latestIncrement -eq $null) { $null | git hash-object -t tree --stdin } else { "$prefix-$baseVersion.$latestIncrement" }
 
             return @{
               Name = $name;
