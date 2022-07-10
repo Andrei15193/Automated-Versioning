@@ -1,0 +1,1 @@
+I am the base project, both `Project 2` and `Project 3` depend on me. Any changes in this project (directory) impact the other two and any release of this project should generate releases for the other two as well.

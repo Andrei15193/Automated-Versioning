@@ -1,0 +1,1 @@
+I am a dependent project, any changes in this project do not have an impact in other projects. Whenever a release is made for this project no other release should be created for any other project.
