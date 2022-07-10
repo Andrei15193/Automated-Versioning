@@ -12,9 +12,17 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     outputs:
-      release_project_1: ${{ steps.releases.outputs.release_project_1 }}
-      release_project_2: ${{ steps.releases.outputs.release_project_2 }}
-      release_project_3: ${{ steps.releases.outputs.release_project_3 }}
+      project1_release: ${{ steps.releases.outputs.project1_release }}
+      project1_release_next_version: ${{ steps.releases.outputs.project1_release_next_version }}
+      project1_release_next_tag: ${{ steps.releases.outputs.project1_release_next_tag }}
+
+      project2_release: ${{ steps.releases.outputs.project2_release }}
+      project2_release_next_version: ${{ steps.releases.outputs.project2_release_next_version }}
+      project2_release_next_tag: ${{ steps.releases.outputs.project2_release_next_tag }}
+
+      project3_release: ${{ steps.releases.outputs.project3_release }}
+      project3_release_next_version: ${{ steps.releases.outputs.project3_release_next_version }}
+      project3_release_next_tag: ${{ steps.releases.outputs.project3_release_next_tag }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -27,7 +35,7 @@ jobs:
       - name: Determine Releases
         id: releases
         run: |
-          Write-Output "If the build and testing and all the good stuff run without a problem, determine which releases need to be created"
+          Write-Output "If the build and testing and all the good stuff runs without a problem, determine which releases need to be created"
 
           function Get-LatestReleaseRef([string]$prefix, [string]$baseVersion) {
             $tagFilter = "^$(([regex]::Escape("$($prefix)-$baseVersion")))\.\d+$"
@@ -45,32 +53,67 @@ jobs:
             return $latestReleaseRef;
           }
 
-          git diff --name-only (Get-LatestReleaseRef "project1" (Get-Content 'Project 1/version.txt'))
+          function Get-ReleaseInformation([string]$prefix, [string]$baseVersion) {
+            $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
+            $latestIncrement = git tag `
+              | Where-Object { $_ -match $tagFilter } `
+              | ForEach-Object {
+                $_ -split "\." `
+                | Select-Object -Last 1 `
+                | ForEach-Object { $_ -as [int] }
+              } `
+              | Sort-Object -Descending `
+              | Select-Object -First 1
 
-          if (git diff (Get-LatestReleaseRef "project1" (Get-Content 'Project 1/version.txt')) -- 'Project 1/') {
-            Write-Output "::set-output name=release_project_1::yes"
-            Write-Output "::set-output name=release_project_2::yes"
-            Write-Output "::set-output name=release_project_3::yes"
+            $nextVersion = if ($latestIncrement -eq $null) { "$baseVersion.0" } else { "$baseVersion.$($latestIncrement + 1)" }
+            $latestReleaseRef = if ($latestIncrement -eq $null) { (git rev-list --max-parents=0 HEAD) } else { "$prefix-$baseVersion.$latestIncrement" }
+
+            return @{
+              Prefix = $prefix;
+              NextVersion = $nextVersion;
+              NextTag = "$prefix-$nextVersion";
+              LatestReleaseRef = $latestReleaseRef
+            }
           }
-          elseif (git diff (Get-LatestReleaseRef "project2" (Get-Content 'Project 2/version.txt')) -- 'Project 2/') {
-            Write-Output "::set-output name=release_project_2::yes"
+
+          function Set-CreateProjectReleaseOutput($releaseInformation) {
+            Write-Output "::set-output name=$($releaseInformation.Prefix)_release::yes"
+            Write-Output "::set-output name=$($releaseInformation.Prefix)_release_next_version::$($releaseInformation.NextVersion)"
+            Write-Output "::set-output name=$($releaseInformation.Prefix)_release_next_tag::$($releaseInformation.NextTag)"
           }
-          elseif (git diff (Get-LatestReleaseRef "project3" (Get-Content 'Project 3/version.txt') -- 'Project 3/')) {
-            Write-Output "::set-output name=release_project_3::yes"
+
+          $project1ReleaseInformation = Get-ReleaseInformation "project1" (Get-Content 'Project 1/version.txt')
+          $project2ReleaseInformation = Get-ReleaseInformation "project2" (Get-Content 'Project 2/version.txt')
+          $project3ReleaseInformation = Get-ReleaseInformation "project3" (Get-Content 'Project 3/version.txt')
+
+          if (git diff $project1ReleaseInformation.LatestReleaseRef -- 'Project 1/') {
+            Set-CreateProjectReleaseOutput $project1ReleaseInformation
+            Set-CreateProjectReleaseOutput $project2ReleaseInformation
+            Set-CreateProjectReleaseOutput $project3ReleaseInformation
+          }
+          elseif (git diff $project2ReleaseInformation.LatestReleaseRef -- 'Project 2/') {
+            Write-Output (Set-CreateProjectReleaseOutput $project2ReleaseInformation)
+          }
+          elseif (git diff $project3ReleaseInformation.LatestReleaseRef -- 'Project 3/') {
+            Write-Output (Set-CreateProjectReleaseOutput $project3ReleaseInformation)
           }
 
       - name: Create Project 2 Release
-        if: steps.releases.outputs.release_project_2 == 'yes'
+        if: steps.releases.outputs.project2_release == 'yes'
         run: |
           Write-Output "I should probably create a release for Project 2"
 
       - name: Create Project 3 Release
-        if: steps.releases.outputs.release_project_3 == 'yes'
+        if: steps.releases.outputs.project3_release == 'yes'
         run: |
           Write-Output "I should probably create a release for Project 3"
 
   create-release-project-1:
     name: Create Project 1 Release
+    runs-on: ubuntu-latest
     needs: build
-    if: needs.build.outputs.release_project_1 == 'yes'
-    uses: ./.github/workflows/release-project-1.yml
+    if: needs.build.outputs.project1_release == 'yes'
+    steps:
+      - name: Create Project 1 Release
+        run: |
+          Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}"
