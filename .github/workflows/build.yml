@@ -38,7 +38,7 @@ jobs:
         run: |
           Write-Output "If the build and testing and all the good stuff runs without a problem, determine which releases need to be created"
 
-          function Get-ReleaseInformation([string]$prefix, [string]$baseVersion) {
+          function Get-ReleaseInformation([string]$name, [string]$prefix, [string]$baseVersion) {
             $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
             $latestIncrement = git tag --list "$prefix-$baseVersion" `
               | Where-Object { $_ -match $tagFilter } `
@@ -54,6 +54,7 @@ jobs:
             $latestReleaseRef = if ($latestIncrement -eq $null) { (git rev-list --max-parents=0 HEAD) } else { "$prefix-$baseVersion.$latestIncrement" }
 
             return @{
+              Name = $name;
               Prefix = $prefix;
               NextVersion = $nextVersion;
               NextTag = "$prefix-$nextVersion";
@@ -63,13 +64,14 @@ jobs:
 
           function Set-CreateProjectReleaseOutput($releaseInformation) {
             Write-Output "::set-output name=$($releaseInformation.Prefix)_release::yes"
+            Write-Output "::set-output name=$($releaseInformation.Prefix)_release_name::$($releaseInformation.Name)"
             Write-Output "::set-output name=$($releaseInformation.Prefix)_release_next_version::$($releaseInformation.NextVersion)"
             Write-Output "::set-output name=$($releaseInformation.Prefix)_release_next_tag::$($releaseInformation.NextTag)"
           }
 
-          $project1ReleaseInformation = Get-ReleaseInformation "project1" (Get-Content 'Project 1/version.txt')
-          $project2ReleaseInformation = Get-ReleaseInformation "project2" (Get-Content 'Project 2/version.txt')
-          $project3ReleaseInformation = Get-ReleaseInformation "project3" (Get-Content 'Project 3/version.txt')
+          $project1ReleaseInformation = Get-ReleaseInformation "Project 1" "project1" (Get-Content 'Project 1/version.txt')
+          $project2ReleaseInformation = Get-ReleaseInformation "Project 2" "project2" (Get-Content 'Project 2/version.txt')
+          $project3ReleaseInformation = Get-ReleaseInformation "Project 3" "project3" (Get-Content 'Project 3/version.txt')
 
           if (git diff $project1ReleaseInformation.LatestReleaseRef -- 'Project 1/') {
             Set-CreateProjectReleaseOutput $project1ReleaseInformation
@@ -83,16 +85,6 @@ jobs:
             Write-Output (Set-CreateProjectReleaseOutput $project3ReleaseInformation)
           }
 
-      - name: Create Project 2 Release
-        if: steps.releases.outputs.project2_release == 'yes'
-        run: |
-          Write-Output "I should probably create a release for Project 2"
-
-      - name: Create Project 3 Release
-        if: steps.releases.outputs.project3_release == 'yes'
-        run: |
-          Write-Output "I should probably create a release for Project 3"
-
   create-release-project-1:
     name: Create Project 1 Release
     runs-on: ubuntu-latest
@@ -103,11 +95,15 @@ jobs:
         name: Checkout Sources
 
       - name: Create Project 1 Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}"
 
-          git tag ${{ needs.build.outputs.project1_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project1_release_next_version }}"
-          git push origin ${{ needs.build.outputs.project1_release_next_tag }}
+          gh release create ${{ needs.build.outputs.project1_release_next_tag }} `
+            --title "${{ needs.build.outputs.project1_release_name }} ${{ needs.build.outputs.project1_release_next_version }}" `
+            --notes "Release Notes for ${{ needs.build.outputs.project1_release_next_version }}" `
+            --target "${{ github.event.head_commit.id }}"
 
   create-release-project-2:
     name: Create Project 2 Release
@@ -119,11 +115,15 @@ jobs:
         name: Checkout Sources
 
       - name: Create Project 2 Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 2, next version: ${{ needs.build.outputs.project2_release_next_version }}, next tag: ${{ needs.build.outputs.project2_release_next_tag }}"
 
-          git tag ${{ needs.build.outputs.project1_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project2_release_next_version }}"
-          git push origin ${{ needs.build.outputs.project2_release_next_tag }}
+          gh release create ${{ needs.build.outputs.project2_release_next_tag }} `
+            --title "${{ needs.build.outputs.project2_release_name }} ${{ needs.build.outputs.project2_release_next_version }}" `
+            --notes "Release Notes for ${{ needs.build.outputs.project2_release_next_version }}" `
+            --target "${{ github.event.head_commit.id }}"
 
   create-release-project-3:
     name: Create Project 3 Release
@@ -135,8 +135,12 @@ jobs:
         name: Checkout Sources
 
       - name: Create Project 3 Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 3, next version: ${{ needs.build.outputs.project3_release_next_version }}, next tag: ${{ needs.build.outputs.project3_release_next_tag }}"
 
-          git tag ${{ needs.build.outputs.project3_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project3_release_next_version }}"
-          git push origin ${{ needs.build.outputs.project3_release_next_tag }}
+          gh release create ${{ needs.build.outputs.project3_release_next_tag }} `
+            --title "${{ needs.build.outputs.project3_release_name }} ${{ needs.build.outputs.project3_release_next_version }}" `
+            --notes "Release Notes for ${{ needs.build.outputs.project3_release_next_version }}" `
+            --target "${{ github.event.head_commit.id }}"
