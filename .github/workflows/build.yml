@@ -13,14 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       project1_release: ${{ steps.releases.outputs.project1_release }}
+      project1_release_name: ${{ steps.releases.outputs.project1_release_name }}
       project1_release_next_version: ${{ steps.releases.outputs.project1_release_next_version }}
       project1_release_next_tag: ${{ steps.releases.outputs.project1_release_next_tag }}
 
       project2_release: ${{ steps.releases.outputs.project2_release }}
+      project2_release_name: ${{ steps.releases.outputs.project2_release_name }}
       project2_release_next_version: ${{ steps.releases.outputs.project2_release_next_version }}
       project2_release_next_tag: ${{ steps.releases.outputs.project2_release_next_tag }}
 
       project3_release: ${{ steps.releases.outputs.project3_release }}
+      project3_release_name: ${{ steps.releases.outputs.project3_release_name }}
       project3_release_next_version: ${{ steps.releases.outputs.project3_release_next_version }}
       project3_release_next_tag: ${{ steps.releases.outputs.project3_release_next_tag }}
     steps:
