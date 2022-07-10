@@ -99,7 +99,7 @@ jobs:
 
       - name: Create Project 1 Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}"
 
@@ -119,7 +119,7 @@ jobs:
 
       - name: Create Project 2 Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 2, next version: ${{ needs.build.outputs.project2_release_next_version }}, next tag: ${{ needs.build.outputs.project2_release_next_tag }}"
 
@@ -139,7 +139,7 @@ jobs:
 
       - name: Create Project 3 Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           Write-Output "I should probably create a release for Project 3, next version: ${{ needs.build.outputs.project3_release_next_version }}, next tag: ${{ needs.build.outputs.project3_release_next_tag }}"
 
