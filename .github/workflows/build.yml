@@ -25,6 +25,7 @@ jobs:
       project3_release_next_tag: ${{ steps.releases.outputs.project3_release_next_tag }}
     steps:
       - uses: actions/checkout@v3
+        name: Checkout Sources
         with:
           fetch-depth: 0
 
@@ -37,25 +38,9 @@ jobs:
         run: |
           Write-Output "If the build and testing and all the good stuff runs without a problem, determine which releases need to be created"
 
-          function Get-LatestReleaseRef([string]$prefix, [string]$baseVersion) {
-            $tagFilter = "^$(([regex]::Escape("$($prefix)-$baseVersion")))\.\d+$"
-            $latestIncrement = git tag `
-              | Where-Object { $_ -match $tagFilter } `
-              | ForEach-Object {
-                $_ -split "\." `
-                | Select-Object -Last 1 `
-                | ForEach-Object { $_ -as [int] }
-              } `
-              | Sort-Object -Descending `
-              | Select-Object -First 1
-
-            $latestReleaseRef = if ($latestIncrement -eq $null) { (git rev-list --max-parents=0 HEAD) } else { "$prefix-$baseVersion.$latestIncrement" }
-            return $latestReleaseRef;
-          }
-
           function Get-ReleaseInformation([string]$prefix, [string]$baseVersion) {
             $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
-            $latestIncrement = git tag `
+            $latestIncrement = git tag --list "$prefix-$baseVersion" `
               | Where-Object { $_ -match $tagFilter } `
               | ForEach-Object {
                 $_ -split "\." `
@@ -114,9 +99,15 @@ jobs:
     needs: build
     if: needs.build.outputs.project1_release == 'yes'
     steps:
+      - uses: actions/checkout@v3
+        name: Checkout Sources
+
       - name: Create Project 1 Release
         run: |
           Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}"
+
+          git tag ${{ needs.build.outputs.project1_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project1_release_next_version }}"
+          git push origin ${{ needs.build.outputs.project1_release_next_tag }}
 
   create-release-project-2:
     name: Create Project 2 Release
@@ -124,9 +115,15 @@ jobs:
     needs: build
     if: needs.build.outputs.project2_release == 'yes'
     steps:
+      - uses: actions/checkout@v3
+        name: Checkout Sources
+
       - name: Create Project 2 Release
         run: |
           Write-Output "I should probably create a release for Project 2, next version: ${{ needs.build.outputs.project2_release_next_version }}, next tag: ${{ needs.build.outputs.project2_release_next_tag }}"
+
+          git tag ${{ needs.build.outputs.project1_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project2_release_next_version }}"
+          git push origin ${{ needs.build.outputs.project2_release_next_tag }}
 
   create-release-project-3:
     name: Create Project 3 Release
@@ -134,6 +131,12 @@ jobs:
     needs: build
     if: needs.build.outputs.project3_release == 'yes'
     steps:
+      - uses: actions/checkout@v3
+        name: Checkout Sources
+
       - name: Create Project 3 Release
         run: |
           Write-Output "I should probably create a release for Project 3, next version: ${{ needs.build.outputs.project3_release_next_version }}, next tag: ${{ needs.build.outputs.project3_release_next_tag }}"
+
+          git tag ${{ needs.build.outputs.project3_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project3_release_next_version }}"
+          git push origin ${{ needs.build.outputs.project3_release_next_tag }}
