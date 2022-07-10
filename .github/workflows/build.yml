@@ -81,11 +81,13 @@ jobs:
             Set-CreateProjectReleaseOutput $project2ReleaseInformation
             Set-CreateProjectReleaseOutput $project3ReleaseInformation
           }
-          elseif (git diff $project2ReleaseInformation.LatestReleaseRef -- 'Project 2/') {
-            Write-Output (Set-CreateProjectReleaseOutput $project2ReleaseInformation)
-          }
-          elseif (git diff $project3ReleaseInformation.LatestReleaseRef -- 'Project 3/') {
-            Write-Output (Set-CreateProjectReleaseOutput $project3ReleaseInformation)
+          else {
+            if (git diff $project2ReleaseInformation.LatestReleaseRef -- 'Project 2/') {
+              Write-Output (Set-CreateProjectReleaseOutput $project2ReleaseInformation)
+            }
+            if (git diff $project3ReleaseInformation.LatestReleaseRef -- 'Project 3/') {
+              Write-Output (Set-CreateProjectReleaseOutput $project3ReleaseInformation)
+            }
           }
 
   create-release-project-1:
