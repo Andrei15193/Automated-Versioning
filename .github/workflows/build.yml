@@ -43,7 +43,7 @@ jobs:
 
           function Get-ReleaseInformation([string]$name, [string]$prefix, [string]$baseVersion) {
             $tagFilter = "^$(([regex]::Escape("$prefix-$baseVersion")))\.\d+$"
-            $latestIncrement = git tag --list "$prefix-$baseVersion" `
+            $latestIncrement = git tag --list "$prefix-$baseVersion.*" `
               | Where-Object { $_ -match $tagFilter } `
               | ForEach-Object {
                 $_ -split "\." `
