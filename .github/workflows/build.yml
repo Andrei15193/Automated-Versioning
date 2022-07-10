@@ -3,8 +3,12 @@ name: Build
 on:
 - push
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
-  listVersions:
+  build:
     name: List Versions (this could be a build)
     runs-on: ubuntu-latest
     steps:
@@ -13,8 +17,25 @@ jobs:
           fetch-depth: 0
 
       - name: List Versions
-        shell: pwsh
+        id: releases
         run: |
           Get-Content 'Project 1/version.txt'
           Get-Content 'Project 2/version.txt'
           Get-Content 'Project 3/version.txt'
+          Write-Output "::set-output name=release_project_1::yes"
+          Write-Output "::set-output name=release_project_2::no"
+
+      - name: Release Project 1
+        if: steps.releases.outputs.release_project_1 == 'yes'
+        run: |
+          Write-Output "I should probably create a release for Project 1"
+
+      - name: Release Project 2
+        if: steps.releases.outputs.release_project_2 == 'yes'
+        run: |
+          Write-Output "I should probably create a release for Project 2"
+
+      - name: Release Project 3
+        if: steps.releases.outputs.release_project_3 == 'yes'
+        run: |
+          Write-Output "I should probably create a release for Project 3"
