@@ -111,9 +111,6 @@ jobs:
         run: |
           Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}, previous release ref: ${{ needs.build.outputs.project1_release_latest_release_ref }}"
 
-          git tag ${{ needs.build.outputs.project1_release_next_tag }} --annotate --message "Release Notes for ${{ needs.build.outputs.project1_release_next_version }}"
-          git push origin --tags
-
           gh release create ${{ needs.build.outputs.project1_release_next_tag }} `
             --title "${{ needs.build.outputs.project1_release_name }} ${{ needs.build.outputs.project1_release_next_version }}" `
             --notes "Release Notes for ${{ needs.build.outputs.project1_release_next_version }}" `
