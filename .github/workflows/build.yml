@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - *
+      - '*'
 
 defaults:
   run:
@@ -109,7 +109,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}, previous release ref: {{ needs.build.outputs.project1_release_latest_release_ref }}"
+          Write-Output "I should probably create a release for Project 1, next version: ${{ needs.build.outputs.project1_release_next_version }}, next tag: ${{ needs.build.outputs.project1_release_next_tag }}, previous release ref: ${{ needs.build.outputs.project1_release_latest_release_ref }}"
 
           gh release create ${{ needs.build.outputs.project1_release_next_tag }} `
             --title "${{ needs.build.outputs.project1_release_name }} ${{ needs.build.outputs.project1_release_next_version }}" `
@@ -129,7 +129,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          Write-Output "I should probably create a release for Project 2, next version: ${{ needs.build.outputs.project2_release_next_version }}, next tag: ${{ needs.build.outputs.project2_release_next_tag }}, previous release ref: {{ needs.build.outputs.project2_release_latest_release_ref }}"
+          Write-Output "I should probably create a release for Project 2, next version: ${{ needs.build.outputs.project2_release_next_version }}, next tag: ${{ needs.build.outputs.project2_release_next_tag }}, previous release ref: ${{ needs.build.outputs.project2_release_latest_release_ref }}"
 
           gh release create ${{ needs.build.outputs.project2_release_next_tag }} `
             --title "${{ needs.build.outputs.project2_release_name }} ${{ needs.build.outputs.project2_release_next_version }}" `
@@ -149,7 +149,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          Write-Output "I should probably create a release for Project 3, next version: ${{ needs.build.outputs.project3_release_next_version }}, next tag: ${{ needs.build.outputs.project3_release_next_tag }}, previous release ref: {{ needs.build.outputs.project3_release_latest_release_ref }}"
+          Write-Output "I should probably create a release for Project 3, next version: ${{ needs.build.outputs.project3_release_next_version }}, next tag: ${{ needs.build.outputs.project3_release_next_tag }}, previous release ref: ${{ needs.build.outputs.project3_release_latest_release_ref }}"
 
           gh release create ${{ needs.build.outputs.project3_release_next_tag }} `
             --title "${{ needs.build.outputs.project3_release_name }} ${{ needs.build.outputs.project3_release_next_version }}" `
